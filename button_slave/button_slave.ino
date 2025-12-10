@@ -12,7 +12,7 @@ byte led = 19;
 byte button = 5;
 byte battery = 2;
 char message;
-unsigned long lastMessage = 0;
+long lastMessage = 0;
 const unsigned long TIMEOUT_MS = 30 * 60 * 1000; // timeout after 30 minutes!
 const int cutoff = 2400;
 
@@ -76,7 +76,7 @@ void setup() {
 
 void loop() {
   int level = analogRead(battery);
-  unsigned long currentTime = millis();
+  long currentTime = millis();
   Serial0.println(analogRead(battery));
   if(level < cutoff && digitalRead(relay) != HIGH){ // if the battery level drops 3.5V it should kill the device also checks if the relay is high
     WiFi.disconnect();
