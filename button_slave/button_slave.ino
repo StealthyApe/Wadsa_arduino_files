@@ -13,8 +13,8 @@ byte button = 5;
 byte battery = 2;
 char message;
 long lastMessage = 0;
-const unsigned long TIMEOUT_MS = 30 * 60 * 1000; // timeout after 30 minutes!
-const int cutoff = 2400;
+const long TIMEOUT_MS = 30 * 60 * 1000; // timeout after 30 minutes!
+const int cutoff = 2400; // 2400
 
 // callback function that will be executed when data is received
 void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
@@ -36,13 +36,15 @@ void handleTimeout(){ // gets called if nothing happens for 30 minutes
 }
 
 void setup() {
-  // Initialize Serial Monitor
-  Serial0.begin(115200);
   pinMode(button,INPUT_PULLUP);
   pinMode(battery, INPUT);
+  pinMode(led,OUTPUT);
+  digitalWrite(led,LOW);
+  lastMessage = millis();
   while(digitalRead(button) == LOW){ // make sure the button isn't already low when the interupt is attached!
     delay(1);
   }
+  
   esp_deep_sleep_enable_gpio_wakeup(1ULL << button, ESP_GPIO_WAKEUP_GPIO_LOW);
   int startLevel = analogRead(battery);
   if(startLevel < cutoff){ // kills the device if already below the threshold so the user doesn't see any lights
@@ -53,23 +55,20 @@ void setup() {
 
   // Init ESP-NOW
   if (esp_now_init() != ESP_OK) {
-    Serial0.println("Error initializing ESP-NOW");
     return;
   }
+
 
   // Once ESPNow is successfully Init, we will register for recv CB to
   // get recv packer info
   esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
   pinMode(relay, OUTPUT);
-
-  pinMode(led,OUTPUT);
   for(byte i = 0; i < 3; i++){
     digitalWrite(led,HIGH);
     delay(50);
     digitalWrite(led,LOW);
     delay(50);
   }
-  Serial0.println(analogRead(battery));
   digitalWrite(led,LOW);
 
 }
@@ -77,7 +76,6 @@ void setup() {
 void loop() {
   int level = analogRead(battery);
   long currentTime = millis();
-  Serial0.println(analogRead(battery));
   if(level < cutoff && digitalRead(relay) != HIGH){ // if the battery level drops 3.5V it should kill the device also checks if the relay is high
     WiFi.disconnect();
     esp_deep_sleep_start();
@@ -90,6 +88,7 @@ void loop() {
     digitalWrite(led,HIGH);
     delay(100);
     digitalWrite(led,LOW);
+    delay(100);
   }
 
 }
